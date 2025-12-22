@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/BoxComponent.h"
 #include "GameFramework/Actor.h"
 #include "MovePlatform.generated.h"
 
@@ -19,25 +20,36 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	// 최대 이동 가능한 층
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UStaticMeshComponent> Platform;
+	
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UBoxComponent> OverlapBox;
+	
 	UPROPERTY(EditAnywhere)
 	int32 MaxFloor = 5;
 
-	// 오프셋 값
-	UPROPERTY(EditAnywhere)
-	float FloorOffset = 300.f;
-
-	// 이동할 층
 	UPROPERTY(EditAnywhere)
 	int32 TargetFloor = 1;
 
-	// 이동 속도
+	UPROPERTY(EditAnywhere)
+	float Offset = 200.f;
+
 	UPROPERTY(EditAnywhere)
 	float MoveSpeed = 200.f;
 
-	
-	float StartZ = 0.f;
-	float TargetZ = 0.f;
+	float StartZ = 0;
+	float TargetZ = 0;
 
-	void MoveToTarget(float DeltaTime);
+	bool bIsActive = false;
+
+	UFUNCTION()
+	void Move(float DeltaTime);
+
+protected:
+	UFUNCTION()
+	void OnOverlapEvent(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
+	UFUNCTION()
+	void OnEndOverlapEvent(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };

@@ -1,55 +1,86 @@
 #include "MovePlatform.h"
+#include "Components/BoxComponent.h"
 
 AMovePlatform::AMovePlatform()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	Platform = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Platform"));
+	SetRootComponent(Platform);
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> PlatformMesh(TEXT("/Script/Engine.StaticMesh'/Game/Movement/Mesh/Plain_Wood_Platform.Plain_Wood_Platform'"));
+	if (PlatformMesh.Succeeded())
+	{
+		Platform->SetStaticMesh(PlatformMesh.Object);
+	}
+
+	OverlapBox = CreateDefaultSubobject<UBoxComponent>(TEXT("OverlapBox"));
+	OverlapBox->SetupAttachment(Platform);
+	OverlapBox->SetBoxExtent(FVector(110.f, 145.f, 30.f));
+
+	OverlapBox->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnOverlapEvent);
+	OverlapBox->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnEndOverlapEvent);
 }
 
 void AMovePlatform::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 시작 위치 저장
 	StartZ = GetActorLocation().Z;
-	
-	// 최소 1층, 최대 MaxFloor로 제한
-	if (TargetFloor < 1)
+
+	if (TargetFloor <= 1)
 	{
-		TargetFloor = 1;
+		TargetFloor = 0;
 	}
-	else if (TargetFloor > MaxFloor)
+
+	if (TargetFloor >= MaxFloor)
 	{
 		TargetFloor = MaxFloor;
 	}
-	
-	//TargetFloor = FMath::Clamp(TargetFloor, 1, MaxFloor);
-	TargetZ = StartZ + TargetFloor * FloorOffset;
+
+	TargetZ = StartZ + (TargetFloor * Offset);
 }
 
 void AMovePlatform::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	MoveToTarget(DeltaTime);
-	
-	UE_LOG(LogTemp, Warning, TEXT("Actor Z Location: %f"), GetActorLocation().Z);
+
+	Move(DeltaTime);
 }
 
-void AMovePlatform::MoveToTarget(float DeltaTime)
+void AMovePlatform::Move(float DeltaTime)
 {
-	FVector Current = GetActorLocation();
-
-	//Current.Z = FMath::FInterpConstantTo(Current.Z, TargetZ, DeltaTime, MoveSpeed);
-
-	Current.Z += MoveSpeed* DeltaTime;
-
-	if (Current.Z >= TargetZ)
+	FVector CurrentLocation = GetActorLocation();
+	
+	if (bIsActive)
 	{
-		Current.Z = TargetZ;
+		CurrentLocation.Z += MoveSpeed * DeltaTime;
+		
+		if (CurrentLocation.Z >= TargetZ)
+		{
+			CurrentLocation.Z = TargetZ;
+		}
+	}
+	else
+	{
+		if (CurrentLocation.Z >= StartZ)
+		{
+			CurrentLocation.Z -= MoveSpeed * DeltaTime;
+		}
 	}
 	
-	SetActorLocation(Current);
+	SetActorLocation(CurrentLocation);
 }
 
+void AMovePlatform::OnOverlapEvent(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+{
+	UE_LOG(LogTemp, Warning, TEXT("오버랩"));
+	bIsActive = true;
+}
 
+void AMovePlatform::OnEndOverlapEvent(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	UE_LOG(LogTemp, Warning, TEXT("오버랩 해제"));
+	bIsActive = false;
+}
 
+// 오버랩되고, 특정키를 누르면 인터페이스로 전달해서 목표층으로 상승하게
