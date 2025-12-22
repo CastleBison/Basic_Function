@@ -83,4 +83,4 @@ void AMovePlatform::OnEndOverlapEvent(UPrimitiveComponent* OverlappedComponent, 
 	bIsActive = false;
 }
 
-// 오버랩되고, 특정키를 누르면 인터페이스로 전달해서 목표층으로 상승하게
+// 오버랩되고, 특정키를 누르면 인터페이스로 전달해서 목표층으로 상승하게.
