@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "unreal-master": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "unreal-master-mcp-server"
+      ],
+      "env": {
+        "UE_WS_PORT": "9877"
+      }
+    }
+  }
+}
